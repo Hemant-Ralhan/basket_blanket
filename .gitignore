@@ -1,0 +1,6 @@
+.env
+**/.env
+.adk/
+**/.adk/
+__pycache__/
+*.pyc
