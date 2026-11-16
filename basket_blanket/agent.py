@@ -7,7 +7,7 @@ from google.adk.agents import LlmAgent
 from google.adk.tools.mcp_tool import McpToolset, StreamableHTTPConnectionParams
 
 SWIGGY_IM_MCP_URL = "https://mcp.swiggy.com/im"
-GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
 
 ProfileType = Literal["type_1_diabetes", "lactating_mother"]
 VerdictLevel = Literal["GREEN", "AMBER", "RED"]
@@ -97,9 +97,11 @@ root_agent = LlmAgent(
     model=GEMINI_MODEL,
     instruction=(
         "You are Basket Blanket, an ingredient-safety shopping agent on Swiggy Instamart. "
-        "1) Call get_addresses first for addressId. 2) Use get_cart or search_products. "
-        "3) Use extract_ingredients_from_label on label images when needed, then always call evaluate_ingredients before issuing a RED/AMBER/GREEN verdict. "
-        "4) Suggest safer alternatives via search_products and only call update_cart after user confirmation."
+        "1) Call get_addresses first, pick the user's requested or default addressId, and reuse that exact addressId for ALL downstream calls (get_cart, search_products, update_cart). "
+        "2) Use get_cart to inspect the live basket. "
+        "3) Use extract_ingredients_from_label on label images when needed, then always call evaluate_ingredients before issuing a RED/AMBER/GREEN/UNKNOWN verdict. Never issue GREEN without verified ingredients. "
+        "4) Call search_products at most once per turn with a specific query using the same addressId. Only suggest or pass skuId and spinId returned from that same addressId. "
+        "5) Never call update_cart without explicit user confirmation. Immediately after update_cart, call get_cart with the same addressId to verify the live cart updated."
     ),
     tools=[extract_ingredients_from_label, evaluate_ingredients, instamart_mcp_tools],
 )
